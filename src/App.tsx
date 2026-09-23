@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useConference } from "./hooks/useConference";
 import { useGistSync } from "./hooks/useGistSync";
-import { TierSection } from "./components/TierSection";
+import { TieredBoard } from "./components/TieredBoard";
 import { CompanyFormModal, type CompanyFormValue } from "./components/CompanyFormModal";
 import { ImportWizard } from "./components/ImportWizard";
 import { SuggestedAddsPanel } from "./components/SuggestedAddsPanel";
@@ -130,34 +130,16 @@ export default function App() {
         ) : (
           <>
             {(tab === "priority" || tab === "quick-apply") && (
-              <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
-                <div className={tab === "priority" ? "block" : "hidden lg:block"}>
-                  <TierSection
-                    title="Priority — deep focus"
-                    description="Researched and ranked. Drag to reorder."
-                    companies={visibleCompanies.filter((c) => c.tier === "priority")}
-                    onReorder={(ids) => conf.reorderTier("priority", ids)}
-                    onToggleStatus={handleToggleStatus}
-                    onEdit={(c) => setFormTarget(c)}
-                    draggable={!query}
-                    emptyState={
-                      query ? <NoMatches /> : undefined
-                    }
-                  />
-                </div>
-                <div className={tab === "quick-apply" ? "block" : "hidden lg:block"}>
-                  <TierSection
-                    title="Quick apply"
-                    description="Grab the link, apply, move on."
-                    companies={visibleCompanies.filter((c) => c.tier === "quick-apply")}
-                    onReorder={(ids) => conf.reorderTier("quick-apply", ids)}
-                    onToggleStatus={handleToggleStatus}
-                    onEdit={(c) => setFormTarget(c)}
-                    draggable={!query}
-                    emptyState={query ? <NoMatches /> : undefined}
-                  />
-                </div>
-              </div>
+              <TieredBoard
+                companies={visibleCompanies}
+                activeTab={tab}
+                draggable={!query}
+                onToggleStatus={handleToggleStatus}
+                onEdit={(c) => setFormTarget(c)}
+                onReorderTier={(tierKey, ids) => conf.reorderTier(tierKey, ids)}
+                onMoveToPosition={(id, tierKey, index) => conf.moveTierToPosition(id, tierKey, index)}
+                emptyState={query ? <NoMatches /> : undefined}
+              />
             )}
             {tab === "flagged" && (
               <FlaggedPanel companies={visibleCompanies} onEdit={(c) => setFormTarget(c)} />

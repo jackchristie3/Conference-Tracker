@@ -1,64 +1,40 @@
-import {
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { ReactNode } from "react";
-import type { Company } from "../types";
+import type { Company, Tier } from "../types";
+import { tierContainerId } from "../utils/tierIds";
 import { CompanyCard } from "./CompanyCard";
 
 interface Props {
+  tier: Tier;
   title: string;
   description: string;
   companies: Company[];
-  onReorder: (orderedIds: string[]) => void;
   onToggleStatus: (id: string, key: keyof Company["status"]) => void;
   onEdit: (company: Company) => void;
-  /** Disable drag-to-reorder — used when the list is a filtered subset (search), since reordering a subset would corrupt full-tier ranks. */
+  /** Disable drag — used when the list is a filtered subset (search), since reordering/moving a subset would corrupt full-tier ranks. */
   draggable?: boolean;
   emptyState?: ReactNode;
 }
 
+/**
+ * Presentational tier list. Sorting/cross-tier drag is coordinated by a
+ * single DndContext shared across both tiers (see TieredBoard) so a card can
+ * be dragged from one tier straight into the other, not just reordered
+ * within its own list.
+ */
 export function TierSection({
+  tier,
   title,
   description,
   companies,
-  onReorder,
   onToggleStatus,
   onEdit,
   draggable = true,
   emptyState,
 }: Props) {
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
   const sorted = [...companies].sort((a, b) => a.rank - b.rank);
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const ids = sorted.map((c) => c.id);
-    const oldIndex = ids.indexOf(String(active.id));
-    const newIndex = ids.indexOf(String(over.id));
-    if (oldIndex === -1 || newIndex === -1) return;
-    const next = [...ids];
-    next.splice(oldIndex, 1);
-    next.splice(newIndex, 0, String(active.id));
-    onReorder(next);
-  }
+  const { setNodeRef, isOver } = useDroppable({ id: tierContainerId(tier), disabled: !draggable });
 
   const cards = sorted.map((company) => (
     <CompanyCard
@@ -78,21 +54,26 @@ export function TierSection({
         </h2>
         <p className="text-sm text-slate-400">{description}</p>
       </div>
-      {sorted.length === 0 ? (
-        emptyState ?? (
-          <p className="rounded-xl border border-dashed border-slate-700 p-4 text-sm text-slate-500">
-            Nothing here yet.
-          </p>
-        )
-      ) : draggable ? (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div
+        ref={setNodeRef}
+        className={`min-h-[4rem] rounded-xl transition-colors ${
+          isOver ? "bg-emerald-500/10 ring-2 ring-emerald-500/40" : ""
+        }`}
+      >
+        {sorted.length === 0 ? (
+          emptyState ?? (
+            <p className="rounded-xl border border-dashed border-slate-700 p-4 text-sm text-slate-500">
+              Drag a company here, or nothing here yet.
+            </p>
+          )
+        ) : draggable ? (
           <SortableContext items={sorted.map((c) => c.id)} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-2">{cards}</div>
           </SortableContext>
-        </DndContext>
-      ) : (
-        <div className="flex flex-col gap-2">{cards}</div>
-      )}
+        ) : (
+          <div className="flex flex-col gap-2">{cards}</div>
+        )}
+      </div>
     </section>
   );
 }

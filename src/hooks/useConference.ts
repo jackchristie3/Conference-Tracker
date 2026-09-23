@@ -160,6 +160,30 @@ export function useConference() {
     [updateActive],
   );
 
+  /** Moves a company into `tier` at a specific position within it — used for cross-tier drag-and-drop. */
+  const moveTierToPosition = useCallback(
+    (id: string, tier: Tier, index: number) => {
+      updateActive((conf) => {
+        const destIds = conf.companies
+          .filter((c) => c.tier === tier && c.id !== id)
+          .sort((a, b) => a.rank - b.rank)
+          .map((c) => c.id);
+        const clampedIndex = Math.max(0, Math.min(index, destIds.length));
+        destIds.splice(clampedIndex, 0, id);
+        const rankById = new Map(destIds.map((cid, i) => [cid, i]));
+        return {
+          ...conf,
+          companies: conf.companies.map((c) => {
+            if (c.id === id) return { ...c, tier, rank: rankById.get(id)!, updatedAt: Date.now() };
+            if (c.tier === tier && rankById.has(c.id)) return { ...c, rank: rankById.get(c.id)! };
+            return c;
+          }),
+        };
+      });
+    },
+    [updateActive],
+  );
+
   const setSuggestedAdds = useCallback(
     (adds: SuggestedAdd[]) => {
       updateActive((conf) => ({ ...conf, suggestedAdds: adds }));
@@ -242,6 +266,7 @@ export function useConference() {
     removeCompany,
     reorderTier,
     moveTier,
+    moveTierToPosition,
     setSuggestedAdds,
     dismissSuggestedAdd,
     replaceActiveData,
