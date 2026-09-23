@@ -177,9 +177,29 @@ export function useConference() {
     [updateActive],
   );
 
+  /** Wholesale replace the active conference's data (restore-from-backup, sync pull). */
+  const replaceActiveData = useCallback(
+    (data: { name?: string; companies: Company[]; suggestedAdds?: SuggestedAdd[] }) => {
+      updateActive((conf) => ({
+        ...conf,
+        name: data.name ?? conf.name,
+        companies: data.companies,
+        suggestedAdds: data.suggestedAdds,
+      }));
+    },
+    [updateActive],
+  );
+
   const renameConference = useCallback(
     (name: string) => {
       updateActive((conf) => ({ ...conf, name }));
+    },
+    [updateActive],
+  );
+
+  const setGistId = useCallback(
+    (gistId: string | undefined) => {
+      updateActive((conf) => ({ ...conf, gistId }));
     },
     [updateActive],
   );
@@ -224,7 +244,9 @@ export function useConference() {
     moveTier,
     setSuggestedAdds,
     dismissSuggestedAdd,
+    replaceActiveData,
     renameConference,
+    setGistId,
     switchConference,
     createNewConference,
     deleteConference,

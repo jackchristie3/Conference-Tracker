@@ -1,5 +1,11 @@
 import type { ParsedRow } from "./fileParser";
-import { nameSimilarity, parseBoolean, parseNumber, type FieldKey } from "./columnMapping";
+import {
+  nameSimilarity,
+  parseBoolean,
+  parseInterested,
+  parseNumber,
+  type FieldKey,
+} from "./columnMapping";
 import { newCompany, type Company, type CompanyLink } from "../types";
 
 const FUZZY_MATCH_THRESHOLD = 0.82;
@@ -50,7 +56,7 @@ export function rowsToTargets(
         industry: mapping.industry ? (r[mapping.industry] ?? "").trim() : "",
         notes: mapping.notes ? (r[mapping.notes] ?? "").trim() : "",
         priorityFlag: mapping.priority ? parseBoolean(r[mapping.priority] ?? "") : false,
-        interested: mapping.interested ? parseBoolean(r[mapping.interested] ?? "") : true,
+        interested: mapping.interested ? parseInterested(r[mapping.interested] ?? "") : true,
         hasInternshipPosting: mapping.jobPosting
           ? parseBoolean(r[mapping.jobPosting] ?? "")
           : false,
@@ -65,20 +71,24 @@ export function rowsToTargets(
 export interface ReconcileResult {
   companies: Company[];
   unmatchedExhibitors: ExhibitorRecord[];
+  skippedNotInterested: number;
 }
 
 /**
  * Cross-reference the user's target list against the official exhibitor list.
  * Target companies not found on the exhibitor list are flagged (no confirmed booth).
  * Exhibitors not on the target list are returned separately as suggested-add candidates.
+ * Targets explicitly marked not-interested are dropped rather than imported.
  */
 export function reconcile(
   exhibitors: ExhibitorRecord[],
   targets: TargetRecord[],
 ): ReconcileResult {
   const matchedExhibitorIndexes = new Set<number>();
+  const interestedTargets = targets.filter((t) => t.interested);
+  const skippedNotInterested = targets.length - interestedTargets.length;
 
-  const companies: Company[] = targets.map((target) => {
+  const companies: Company[] = interestedTargets.map((target) => {
     let bestIndex = -1;
     let bestScore = 0;
     exhibitors.forEach((ex, i) => {
@@ -111,5 +121,5 @@ export function reconcile(
 
   const unmatchedExhibitors = exhibitors.filter((_, i) => !matchedExhibitorIndexes.has(i));
 
-  return { companies, unmatchedExhibitors };
+  return { companies, unmatchedExhibitors, skippedNotInterested };
 }

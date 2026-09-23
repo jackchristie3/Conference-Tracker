@@ -29,6 +29,8 @@ function toPlainText(conference: Conference): string {
       const booth = c.flaggedNoBooth ? "no confirmed booth" : c.booth ? `booth ${c.booth}` : "";
       lines.push(`- ${c.name}${booth ? ` (${booth})` : ""}${status ? ` — ${status}` : ""}`);
       if (c.applyUrl) lines.push(`  apply: ${c.applyUrl}`);
+      if (c.preBoothNotes) lines.push(`  talking points: ${c.preBoothNotes}`);
+      if (c.postBoothNotes) lines.push(`  debrief: ${c.postBoothNotes}`);
     }
     lines.push("");
   }
@@ -108,8 +110,8 @@ export function ExportPanel({ conference, onClose }: Props) {
           </button>
         </div>
         <p className="mt-3 text-xs text-slate-500">
-          This tool stores everything on this device only — export is the way to back up or send
-          your list to someone else.
+          Data is stored locally by default (see Sync in the header to share across devices) —
+          export is also the way to back up or send your list to someone else.
         </p>
       </div>
     </div>

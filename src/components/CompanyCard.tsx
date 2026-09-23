@@ -6,6 +6,7 @@ interface Props {
   company: Company;
   onToggleStatus: (key: keyof Company["status"]) => void;
   onEdit: () => void;
+  draggable?: boolean;
 }
 
 const statusMeta: { key: keyof Company["status"]; label: string }[] = [
@@ -14,7 +15,7 @@ const statusMeta: { key: keyof Company["status"]; label: string }[] = [
   { key: "talkedAtBooth", label: "Talked at booth" },
 ];
 
-export function CompanyCard({ company, onToggleStatus, onEdit }: Props) {
+export function CompanyCard({ company, onToggleStatus, onEdit, draggable = true }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: company.id,
   });
@@ -35,22 +36,24 @@ export function CompanyCard({ company, onToggleStatus, onEdit }: Props) {
       }`}
     >
       <div className="flex items-start gap-2 p-3">
-        <button
-          type="button"
-          aria-label="Drag to reorder"
-          className="mt-1 flex h-10 w-10 shrink-0 touch-none cursor-grab items-center justify-center rounded-lg bg-slate-700/60 text-slate-300 active:cursor-grabbing"
-          {...attributes}
-          {...listeners}
-        >
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <circle cx="6" cy="5" r="1.5" />
-            <circle cx="6" cy="10" r="1.5" />
-            <circle cx="6" cy="15" r="1.5" />
-            <circle cx="14" cy="5" r="1.5" />
-            <circle cx="14" cy="10" r="1.5" />
-            <circle cx="14" cy="15" r="1.5" />
-          </svg>
-        </button>
+        {draggable && (
+          <button
+            type="button"
+            aria-label="Drag to reorder"
+            className="mt-1 flex h-10 w-10 shrink-0 touch-none cursor-grab items-center justify-center rounded-lg bg-slate-700/60 text-slate-300 active:cursor-grabbing"
+            {...attributes}
+            {...listeners}
+          >
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <circle cx="6" cy="5" r="1.5" />
+              <circle cx="6" cy="10" r="1.5" />
+              <circle cx="6" cy="15" r="1.5" />
+              <circle cx="14" cy="5" r="1.5" />
+              <circle cx="14" cy="10" r="1.5" />
+              <circle cx="14" cy="15" r="1.5" />
+            </svg>
+          </button>
+        )}
 
         <button
           type="button"
@@ -81,13 +84,38 @@ export function CompanyCard({ company, onToggleStatus, onEdit }: Props) {
           {company.sectorFitNote && (
             <p className="mt-0.5 line-clamp-2 text-sm text-slate-400">{company.sectorFitNote}</p>
           )}
+          {company.preBoothNotes && (
+            <p className="mt-1 line-clamp-2 text-sm text-slate-300">
+              <span className="text-slate-500">Talking points: </span>
+              {company.preBoothNotes}
+            </p>
+          )}
         </button>
 
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-700/60 text-xs font-semibold text-slate-300"
-          aria-label={`${doneCount} of 3 steps done`}
-        >
-          {doneCount}/3
+        <div className="flex shrink-0 flex-col items-center gap-1">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700/60 text-xs font-semibold text-slate-300"
+            aria-label={`${doneCount} of 3 steps done`}
+          >
+            {doneCount}/3
+          </div>
+          {company.postBoothNotes ? (
+            <span
+              className="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400"
+              title="Post-booth debrief added"
+            >
+              ✓ debrief
+            </span>
+          ) : (
+            company.status.talkedAtBooth && (
+              <span
+                className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-400"
+                title="Talked at booth but no debrief notes yet"
+              >
+                needs debrief
+              </span>
+            )
+          )}
         </div>
       </div>
 

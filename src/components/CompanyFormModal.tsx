@@ -10,7 +10,8 @@ export interface CompanyFormValue {
   applyUrl: string;
   newsHeadline: string;
   newsUrl: string;
-  notes: string;
+  preBoothNotes: string;
+  postBoothNotes: string;
   priorityFlag: boolean;
   flaggedNoBooth: boolean;
 }
@@ -34,7 +35,8 @@ function toFormValue(c?: Company, defaultTier: Tier = "quick-apply"): CompanyFor
     applyUrl: c?.applyUrl ?? "",
     newsHeadline: c?.news?.headline ?? "",
     newsUrl: c?.news?.url ?? "",
-    notes: c?.notes ?? "",
+    preBoothNotes: c?.preBoothNotes ?? "",
+    postBoothNotes: c?.postBoothNotes ?? "",
     priorityFlag: c?.priorityFlag ?? false,
     flaggedNoBooth: c?.flaggedNoBooth ?? !c?.booth,
   };
@@ -49,6 +51,7 @@ export function CompanyFormModal({
   onMoveTier,
 }: Props) {
   const [value, setValue] = useState<CompanyFormValue>(toFormValue(initial, defaultTier));
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
 
   const set = <K extends keyof CompanyFormValue>(key: K, v: CompanyFormValue[K]) =>
     setValue((prev) => ({ ...prev, [key]: v }));
@@ -168,12 +171,21 @@ export function CompanyFormModal({
             </Field>
           </div>
 
-          <Field label="Notes">
+          <Field label="Talking points (before) — read right before walking up">
             <textarea
               className="input"
               rows={2}
-              value={value.notes}
-              onChange={(e) => set("notes", e.target.value)}
+              value={value.preBoothNotes}
+              onChange={(e) => set("preBoothNotes", e.target.value)}
+            />
+          </Field>
+
+          <Field label="How it went (after) — who you talked to, next steps">
+            <textarea
+              className="input"
+              rows={2}
+              value={value.postBoothNotes}
+              onChange={(e) => set("postBoothNotes", e.target.value)}
             />
           </Field>
 
@@ -201,10 +213,21 @@ export function CompanyFormModal({
               {onRemove && (
                 <button
                   type="button"
-                  onClick={onRemove}
-                  className="min-h-[40px] flex-1 rounded-xl bg-red-900/50 text-sm text-red-300"
+                  onClick={() => {
+                    if (confirmingRemove) {
+                      onRemove();
+                    } else {
+                      setConfirmingRemove(true);
+                    }
+                  }}
+                  onBlur={() => setConfirmingRemove(false)}
+                  className={`min-h-[40px] flex-1 rounded-xl text-sm ${
+                    confirmingRemove
+                      ? "bg-red-600 font-semibold text-white"
+                      : "bg-red-900/50 text-red-300"
+                  }`}
                 >
-                  Remove company
+                  {confirmingRemove ? "Tap again to confirm" : "Remove company"}
                 </button>
               )}
             </div>

@@ -24,7 +24,10 @@ export interface Company {
   secondaryLinks: CompanyLink[];
   status: CompanyStatus;
   flaggedNoBooth: boolean;
-  notes: string;
+  /** Talking points / prep, read right before walking up to the booth. */
+  preBoothNotes: string;
+  /** What actually happened — who you talked to, what was discussed, next steps. */
+  postBoothNotes: string;
   priorityFlag: boolean;
   hasInternshipPosting: boolean;
   jobsOnBoardCount: number;
@@ -45,6 +48,8 @@ export interface Conference {
   updatedAt: number;
   companies: Company[];
   suggestedAdds?: SuggestedAdd[];
+  /** Private GitHub Gist id used for cross-device sync, if linked. */
+  gistId?: string;
 }
 
 export const emptyStatus = (): CompanyStatus => ({
@@ -71,7 +76,8 @@ export const newCompany = (partial: Partial<Company> & { name: string }): Compan
     secondaryLinks: partial.secondaryLinks ?? [],
     status: partial.status ?? emptyStatus(),
     flaggedNoBooth: partial.flaggedNoBooth ?? false,
-    notes: partial.notes ?? "",
+    preBoothNotes: partial.preBoothNotes ?? "",
+    postBoothNotes: partial.postBoothNotes ?? "",
     priorityFlag: partial.priorityFlag ?? false,
     hasInternshipPosting: partial.hasInternshipPosting ?? false,
     jobsOnBoardCount: partial.jobsOnBoardCount ?? 0,

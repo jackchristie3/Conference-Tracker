@@ -15,6 +15,9 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
+      // Registered manually in main.tsx so we can poll for updates while the
+      // app is open, instead of only checking on the next cold navigation.
+      injectRegister: false,
       includeAssets: ["favicon.svg", "apple-touch-icon.png"],
       manifest: {
         name: "Conference Tracker",
@@ -39,6 +42,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],

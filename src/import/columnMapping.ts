@@ -101,7 +101,25 @@ export function parseBoolean(value: string): boolean {
   return ["true", "yes", "y", "1", "x", "priority"].includes(v);
 }
 
+/**
+ * For "interested" specifically: an unmapped or blank cell should mean "no
+ * info, assume yes" rather than silently dropping the row, so this only
+ * treats an explicit negative as not-interested.
+ */
+export function parseInterested(value: string): boolean {
+  const v = value.trim().toLowerCase();
+  return !["no", "n", "false", "0"].includes(v);
+}
+
 export function parseNumber(value: string): number {
   const n = parseInt(value.replace(/[^0-9-]/g, ""), 10);
   return Number.isFinite(n) ? n : 0;
+}
+
+/** True if most non-empty values in a column look like bare numbers, not names. */
+export function columnLooksNumeric(values: string[]): boolean {
+  const nonEmpty = values.map((v) => v.trim()).filter((v) => v.length > 0);
+  if (nonEmpty.length === 0) return false;
+  const numeric = nonEmpty.filter((v) => /^-?\d+(\.\d+)?$/.test(v));
+  return numeric.length / nonEmpty.length >= 0.8;
 }

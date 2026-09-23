@@ -4,6 +4,11 @@ import type { Company } from "../types";
  * Pre-sort heuristic for first import, fully overridable afterward by drag-and-drop.
  * Order of precedence: sector fit note present > explicit priority flag >
  * confirmed internship/job posting > jobs-on-board count.
+ *
+ * This scores whether a sector-fit note exists, not what it says — it's a
+ * bootstrap ordering, not a judgment of actual fit. Don't read a high initial
+ * rank as the app having evaluated the company; it's only reacting to the
+ * presence of imported data.
  */
 export function heuristicScore(company: Pick<
   Company,

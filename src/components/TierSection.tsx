@@ -1,5 +1,6 @@
 import {
   DndContext,
+  KeyboardSensor,
   PointerSensor,
   TouchSensor,
   closestCenter,
@@ -7,7 +8,12 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import type { ReactNode } from "react";
 import type { Company } from "../types";
 import { CompanyCard } from "./CompanyCard";
 
@@ -18,6 +24,9 @@ interface Props {
   onReorder: (orderedIds: string[]) => void;
   onToggleStatus: (id: string, key: keyof Company["status"]) => void;
   onEdit: (company: Company) => void;
+  /** Disable drag-to-reorder — used when the list is a filtered subset (search), since reordering a subset would corrupt full-tier ranks. */
+  draggable?: boolean;
+  emptyState?: ReactNode;
 }
 
 export function TierSection({
@@ -27,10 +36,13 @@ export function TierSection({
   onReorder,
   onToggleStatus,
   onEdit,
+  draggable = true,
+  emptyState,
 }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   const sorted = [...companies].sort((a, b) => a.rank - b.rank);
@@ -48,6 +60,16 @@ export function TierSection({
     onReorder(next);
   }
 
+  const cards = sorted.map((company) => (
+    <CompanyCard
+      key={company.id}
+      company={company}
+      onToggleStatus={(key) => onToggleStatus(company.id, key)}
+      onEdit={() => onEdit(company)}
+      draggable={draggable}
+    />
+  ));
+
   return (
     <section>
       <div className="mb-2 px-1">
@@ -57,24 +79,19 @@ export function TierSection({
         <p className="text-sm text-slate-400">{description}</p>
       </div>
       {sorted.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-700 p-4 text-sm text-slate-500">
-          Nothing here yet.
-        </p>
-      ) : (
+        emptyState ?? (
+          <p className="rounded-xl border border-dashed border-slate-700 p-4 text-sm text-slate-500">
+            Nothing here yet.
+          </p>
+        )
+      ) : draggable ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sorted.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-2">
-              {sorted.map((company) => (
-                <CompanyCard
-                  key={company.id}
-                  company={company}
-                  onToggleStatus={(key) => onToggleStatus(company.id, key)}
-                  onEdit={() => onEdit(company)}
-                />
-              ))}
-            </div>
+            <div className="flex flex-col gap-2">{cards}</div>
           </SortableContext>
         </DndContext>
+      ) : (
+        <div className="flex flex-col gap-2">{cards}</div>
       )}
     </section>
   );

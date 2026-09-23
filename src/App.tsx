@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
 import { useConference } from "./hooks/useConference";
+import { useGistSync } from "./hooks/useGistSync";
 import { TierSection } from "./components/TierSection";
 import { CompanyFormModal, type CompanyFormValue } from "./components/CompanyFormModal";
 import { ImportWizard } from "./components/ImportWizard";
 import { SuggestedAddsPanel } from "./components/SuggestedAddsPanel";
 import { FlaggedPanel } from "./components/FlaggedPanel";
 import { ExportPanel } from "./components/ExportPanel";
+import { SyncPanel } from "./components/SyncPanel";
+import { ConferenceSwitcher } from "./components/ConferenceSwitcher";
 import type { Company } from "./types";
 
 type Tab = "priority" | "quick-apply" | "flagged" | "suggested";
@@ -14,13 +17,23 @@ const EMPTY_COMPANIES: Company[] = [];
 
 export default function App() {
   const conf = useConference();
+  const sync = useGistSync(conf);
   const [tab, setTab] = useState<Tab>("priority");
   const [formTarget, setFormTarget] = useState<Company | "new" | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showSync, setShowSync] = useState(false);
+  const [showSwitcher, setShowSwitcher] = useState(false);
+  const [search, setSearch] = useState("");
 
   const companies = conf.active?.companies ?? EMPTY_COMPANIES;
   const suggestedAdds = conf.active?.suggestedAdds ?? [];
+  const query = search.trim().toLowerCase();
+  const visibleCompanies = query
+    ? companies.filter(
+        (c) => c.name.toLowerCase().includes(query) || c.industry.toLowerCase().includes(query),
+      )
+    : companies;
 
   const counts = useMemo(() => {
     const priority = companies.filter((c) => c.tier === "priority").length;
@@ -60,7 +73,8 @@ export default function App() {
         value.newsHeadline || value.newsUrl
           ? { headline: value.newsHeadline, url: value.newsUrl }
           : undefined,
-      notes: value.notes,
+      preBoothNotes: value.preBoothNotes,
+      postBoothNotes: value.postBoothNotes,
       priorityFlag: value.priorityFlag,
       flaggedNoBooth: value.flaggedNoBooth,
     };
@@ -75,75 +89,90 @@ export default function App() {
     }
   }
 
+  const isFirstRun = counts.total === 0;
+
   return (
     <div className="mx-auto flex min-h-screen max-w-3xl flex-col pb-24 lg:max-w-6xl">
       <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] backdrop-blur">
-        <div className="flex items-center justify-between gap-2">
-          <input
-            className="min-w-0 flex-1 truncate bg-transparent text-lg font-bold text-slate-100 focus:outline-none"
-            value={conf.active?.name ?? ""}
-            onChange={(e) => conf.renameConference(e.target.value)}
-            aria-label="Conference name"
-          />
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setShowExport(true)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800 text-slate-300"
-            aria-label="Export"
-            title="Export"
+            onClick={() => setShowSwitcher(true)}
+            className="min-w-0 flex-1 truncate text-left text-lg font-bold text-slate-100"
+            title="Switch conference"
           >
-            ⇩
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowImport(true)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800 text-slate-300"
-            aria-label="Import"
-            title="Import"
-          >
-            ⇧
+            {conf.active?.name ?? ""} <span className="text-sm font-normal text-slate-500">▾</span>
           </button>
         </div>
+        <div className="mt-2 flex gap-2 overflow-x-auto">
+          <HeaderButton onClick={() => setShowSync(true)} icon="⇅" label="Sync" />
+          <HeaderButton onClick={() => setShowExport(true)} icon="⇩" label="Export" />
+          <HeaderButton onClick={() => setShowImport(true)} icon="⇧" label="Import" />
+        </div>
+        {!isFirstRun && (
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search companies…"
+            className="input mt-2"
+            aria-label="Search companies"
+          />
+        )}
         <p className="mt-1 text-xs text-slate-500">
           {counts.total} companies · {counts.applied} applied · {counts.flagged} unconfirmed
         </p>
       </header>
 
       <main className="flex-1 px-4 py-4">
-        {(tab === "priority" || tab === "quick-apply") && (
-          <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
-            <div className={tab === "priority" ? "block" : "hidden lg:block"}>
-              <TierSection
-                title="Priority — deep focus"
-                description="Researched and ranked. Drag to reorder."
-                companies={companies.filter((c) => c.tier === "priority")}
-                onReorder={(ids) => conf.reorderTier("priority", ids)}
-                onToggleStatus={handleToggleStatus}
-                onEdit={(c) => setFormTarget(c)}
+        {isFirstRun ? (
+          <FirstRunEmptyState onImport={() => setShowImport(true)} onAdd={() => setFormTarget("new")} />
+        ) : (
+          <>
+            {(tab === "priority" || tab === "quick-apply") && (
+              <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+                <div className={tab === "priority" ? "block" : "hidden lg:block"}>
+                  <TierSection
+                    title="Priority — deep focus"
+                    description="Researched and ranked. Drag to reorder."
+                    companies={visibleCompanies.filter((c) => c.tier === "priority")}
+                    onReorder={(ids) => conf.reorderTier("priority", ids)}
+                    onToggleStatus={handleToggleStatus}
+                    onEdit={(c) => setFormTarget(c)}
+                    draggable={!query}
+                    emptyState={
+                      query ? <NoMatches /> : undefined
+                    }
+                  />
+                </div>
+                <div className={tab === "quick-apply" ? "block" : "hidden lg:block"}>
+                  <TierSection
+                    title="Quick apply"
+                    description="Grab the link, apply, move on."
+                    companies={visibleCompanies.filter((c) => c.tier === "quick-apply")}
+                    onReorder={(ids) => conf.reorderTier("quick-apply", ids)}
+                    onToggleStatus={handleToggleStatus}
+                    onEdit={(c) => setFormTarget(c)}
+                    draggable={!query}
+                    emptyState={query ? <NoMatches /> : undefined}
+                  />
+                </div>
+              </div>
+            )}
+            {tab === "flagged" && (
+              <FlaggedPanel companies={visibleCompanies} onEdit={(c) => setFormTarget(c)} />
+            )}
+            {tab === "suggested" && (
+              <SuggestedAddsPanel
+                suggestions={suggestedAdds}
+                onAdd={(s) => {
+                  conf.addCompany({ name: s.name, booth: s.booth, tier: "quick-apply" });
+                  conf.dismissSuggestedAdd(s.name);
+                }}
+                onDismiss={(name) => conf.dismissSuggestedAdd(name)}
               />
-            </div>
-            <div className={tab === "quick-apply" ? "block" : "hidden lg:block"}>
-              <TierSection
-                title="Quick apply"
-                description="Grab the link, apply, move on."
-                companies={companies.filter((c) => c.tier === "quick-apply")}
-                onReorder={(ids) => conf.reorderTier("quick-apply", ids)}
-                onToggleStatus={handleToggleStatus}
-                onEdit={(c) => setFormTarget(c)}
-              />
-            </div>
-          </div>
-        )}
-        {tab === "flagged" && <FlaggedPanel companies={companies} onEdit={(c) => setFormTarget(c)} />}
-        {tab === "suggested" && (
-          <SuggestedAddsPanel
-            suggestions={suggestedAdds}
-            onAdd={(s) => {
-              conf.addCompany({ name: s.name, booth: s.booth, tier: "quick-apply" });
-              conf.dismissSuggestedAdd(s.name);
-            }}
-            onDismiss={(name) => conf.dismissSuggestedAdd(name)}
-          />
+            )}
+          </>
         )}
       </main>
 
@@ -210,6 +239,15 @@ export default function App() {
             setShowImport(false);
             setTab("priority");
           }}
+          onRestore={(backup) => {
+            conf.replaceActiveData({
+              name: backup.name,
+              companies: backup.companies,
+              suggestedAdds: backup.suggestedAdds,
+            });
+            setShowImport(false);
+            setTab("priority");
+          }}
           onClose={() => setShowImport(false)}
         />
       )}
@@ -217,7 +255,72 @@ export default function App() {
       {showExport && conf.active && (
         <ExportPanel conference={conf.active} onClose={() => setShowExport(false)} />
       )}
+
+      {showSync && <SyncPanel sync={sync} onClose={() => setShowSync(false)} />}
+
+      {showSwitcher && (
+        <ConferenceSwitcher
+          conferences={conf.conferences}
+          activeId={conf.active?.id}
+          onSwitch={(id) => void conf.switchConference(id)}
+          onCreate={(name) => void conf.createNewConference(name)}
+          onDelete={(id) => void conf.deleteConference(id)}
+          onRename={(name) => conf.renameConference(name)}
+          onClose={() => setShowSwitcher(false)}
+        />
+      )}
     </div>
+  );
+}
+
+function HeaderButton({
+  onClick,
+  icon,
+  label,
+}: {
+  onClick: () => void;
+  icon: string;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-sm font-medium text-slate-200"
+    >
+      <span aria-hidden="true">{icon}</span>
+      {label}
+    </button>
+  );
+}
+
+function FirstRunEmptyState({ onImport, onAdd }: { onImport: () => void; onAdd: () => void }) {
+  return (
+    <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-slate-700 px-6 py-16 text-center">
+      <p className="text-lg font-semibold text-slate-100">Let's get your list in</p>
+      <p className="max-w-xs text-sm text-slate-400">
+        Import your target list and the conference's exhibitor list to get started, or add
+        companies one at a time.
+      </p>
+      <button
+        type="button"
+        onClick={onImport}
+        className="min-h-[44px] rounded-xl bg-emerald-600 px-6 font-semibold text-white"
+      >
+        Import your lists
+      </button>
+      <button type="button" onClick={onAdd} className="text-sm text-slate-400 underline-offset-2 hover:underline">
+        or add a company manually
+      </button>
+    </div>
+  );
+}
+
+function NoMatches() {
+  return (
+    <p className="rounded-xl border border-dashed border-slate-700 p-4 text-sm text-slate-500">
+      No companies match your search.
+    </p>
   );
 }
 
