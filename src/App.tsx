@@ -248,6 +248,13 @@ export default function App() {
           onCreate={(name) => void conf.createNewConference(name)}
           onDelete={(id) => void conf.deleteConference(id)}
           onRename={(name) => conf.renameConference(name)}
+          onReset={() => {
+            conf.resetCompanies();
+            setShowSwitcher(false);
+            setShowImport(true);
+            setSearch("");
+            setTab("priority");
+          }}
           onClose={() => setShowSwitcher(false)}
         />
       )}

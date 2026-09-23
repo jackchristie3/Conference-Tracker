@@ -25,6 +25,8 @@ export interface TargetRecord {
   jobsOnBoardCount: number;
   applyUrl: string;
   news?: CompanyLink;
+  preBoothNotes: string;
+  postBoothNotes: string;
 }
 
 export function rowsToExhibitors(
@@ -63,6 +65,8 @@ export function rowsToTargets(
         jobsOnBoardCount: mapping.jobsCount ? parseNumber(r[mapping.jobsCount] ?? "") : 0,
         applyUrl: mapping.applyUrl ? (r[mapping.applyUrl] ?? "").trim() : "",
         news: headline || newsUrl ? { headline, url: newsUrl } : undefined,
+        preBoothNotes: mapping.preBoothNotes ? (r[mapping.preBoothNotes] ?? "").trim() : "",
+        postBoothNotes: mapping.postBoothNotes ? (r[mapping.postBoothNotes] ?? "").trim() : "",
       };
     })
     .filter((r) => r.name.length > 0);
@@ -115,6 +119,8 @@ export function reconcile(
       jobsOnBoardCount: target.jobsOnBoardCount,
       applyUrl: target.applyUrl,
       news: target.news,
+      preBoothNotes: target.preBoothNotes,
+      postBoothNotes: target.postBoothNotes,
       tier: target.priorityFlag ? "priority" : "quick-apply",
     });
   });

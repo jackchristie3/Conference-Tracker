@@ -184,6 +184,11 @@ export function useConference() {
     [updateActive],
   );
 
+  /** Empties the active conference's company list (and suggested adds) but keeps the conference itself. */
+  const resetCompanies = useCallback(() => {
+    updateActive((conf) => ({ ...conf, companies: [], suggestedAdds: [] }));
+  }, [updateActive]);
+
   const setSuggestedAdds = useCallback(
     (adds: SuggestedAdd[]) => {
       updateActive((conf) => ({ ...conf, suggestedAdds: adds }));
@@ -267,6 +272,7 @@ export function useConference() {
     reorderTier,
     moveTier,
     moveTierToPosition,
+    resetCompanies,
     setSuggestedAdds,
     dismissSuggestedAdd,
     replaceActiveData,

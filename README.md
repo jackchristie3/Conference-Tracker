@@ -12,7 +12,8 @@ Import the conference's exhibitor list and your own target-company list, cross-r
 - **Track per company** — applied/joined pipeline, news read, and talked-at-booth checkboxes; separate **pre-booth talking points** (read right before walking up) and **post-booth debrief notes** (what happened, next steps), with an at-a-glance indicator for which companies still need a debrief; a direct application/talent-pipeline link and a news link.
 - **Edit anytime** — tap any company card to pop up its full details; add, edit, remove (with a confirm step), re-tier, and re-rank without re-importing anything.
 - **Search** — filter the current tier by name or industry when you need to jump straight to one company.
-- **Multiple conferences** — switch between, create, rename, and delete separate conferences from the header.
+- **Multiple conferences** — switch between, create, rename, and delete separate conferences from the header. Each also has a confirm-gated "Reset company data" action (type RESET) for wiping and re-importing a fresh exhibitor list without losing the conference itself.
+- **Drag between tiers** — a card can be dragged straight from Quick Apply into Priority (or back), not just reordered within its own tier.
 - **Cross-device sync (optional)** — link a conference to a private GitHub Gist (using your own personal access token, stored only in that browser) to sync between your laptop and phone; auto-syncs periodically while open, with a manual "Sync now," last-write-wins on conflicts.
 - **Export / share** — copy a read-only text summary, or download a `.json` backup or `.txt` summary (includes talking points and debrief notes).
 - **Installable PWA** — add to your iPhone home screen for an app-like, full-screen experience. Works offline once loaded; checks for app updates periodically while open so a home-screen install doesn't run stale code. Data is stored locally by default (see Sync above to share across devices).

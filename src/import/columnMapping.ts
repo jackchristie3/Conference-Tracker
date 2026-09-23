@@ -9,7 +9,9 @@ export type FieldKey =
   | "jobsCount"
   | "applyUrl"
   | "newsHeadline"
-  | "newsUrl";
+  | "newsUrl"
+  | "preBoothNotes"
+  | "postBoothNotes";
 
 const CANDIDATES: Record<FieldKey, string[]> = {
   name: ["company", "company name", "exhibitor", "exhibitor name", "organization", "name"],
@@ -31,6 +33,15 @@ const CANDIDATES: Record<FieldKey, string[]> = {
   ],
   newsHeadline: ["news", "news headline", "headline", "article"],
   newsUrl: ["news url", "news link", "article url", "article link"],
+  preBoothNotes: ["opening line", "talking points", "pre-booth", "pre booth", "before"],
+  postBoothNotes: [
+    "notes after talking",
+    "after talking",
+    "debrief",
+    "post-booth",
+    "post booth",
+    "people spoken to",
+  ],
 };
 
 function normalize(s: string): string {
@@ -98,7 +109,7 @@ export function nameSimilarity(a: string, b: string): number {
 
 export function parseBoolean(value: string): boolean {
   const v = value.trim().toLowerCase();
-  return ["true", "yes", "y", "1", "x", "priority"].includes(v);
+  return ["true", "yes", "y", "1", "x", "priority", "high"].includes(v);
 }
 
 /**

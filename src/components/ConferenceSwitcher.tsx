@@ -8,6 +8,7 @@ interface Props {
   onCreate: (name: string) => void;
   onDelete: (id: string) => void;
   onRename: (name: string) => void;
+  onReset: () => void;
   onClose: () => void;
 }
 
@@ -18,10 +19,13 @@ export function ConferenceSwitcher({
   onCreate,
   onDelete,
   onRename,
+  onReset,
   onClose,
 }: Props) {
   const [newName, setNewName] = useState("");
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | undefined>(undefined);
+  const [resetting, setResetting] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState("");
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center">
@@ -60,6 +64,55 @@ export function ConferenceSwitcher({
                     {c.companies.length} companies · this one — updated{" "}
                     {new Date(c.updatedAt).toLocaleDateString()}
                   </p>
+                  {c.companies.length > 0 &&
+                    (resetting ? (
+                      <div className="mt-3 rounded-lg border border-red-800 bg-red-950/30 p-2">
+                        <p className="text-xs text-red-300">
+                          Permanently deletes all {c.companies.length} companies in "{c.name}" (the
+                          conference itself stays). Type <span className="font-mono">RESET</span>{" "}
+                          to confirm.
+                        </p>
+                        <input
+                          className="input mt-2"
+                          value={resetConfirmText}
+                          onChange={(e) => setResetConfirmText(e.target.value)}
+                          placeholder="RESET"
+                          autoFocus
+                        />
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setResetting(false);
+                              setResetConfirmText("");
+                            }}
+                            className="min-h-[36px] flex-1 rounded-lg bg-slate-700 text-xs text-slate-200"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            disabled={resetConfirmText.trim().toUpperCase() !== "RESET"}
+                            onClick={() => {
+                              onReset();
+                              setResetting(false);
+                              setResetConfirmText("");
+                            }}
+                            className="min-h-[36px] flex-1 rounded-lg bg-red-600 text-xs font-semibold text-white disabled:opacity-40"
+                          >
+                            Permanently reset
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setResetting(true)}
+                        className="mt-1 text-xs text-red-400 underline-offset-2 hover:underline"
+                      >
+                        Reset company data…
+                      </button>
+                    ))}
                 </div>
               ) : (
                 <button

@@ -35,6 +35,8 @@ const TARGET_FIELDS: { key: FieldKey; label: string; required?: boolean }[] = [
   { key: "applyUrl", label: "Application / talent-pipeline link" },
   { key: "newsHeadline", label: "News headline" },
   { key: "newsUrl", label: "News link" },
+  { key: "preBoothNotes", label: "Talking points (before)" },
+  { key: "postBoothNotes", label: "Debrief notes (after)" },
 ];
 
 async function loadSheet(file: File): Promise<{ sheet?: ParsedSheet; error?: string }> {
