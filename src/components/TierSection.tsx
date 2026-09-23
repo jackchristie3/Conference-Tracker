@@ -18,8 +18,6 @@ interface Props {
   onReorder: (orderedIds: string[]) => void;
   onToggleStatus: (id: string, key: keyof Company["status"]) => void;
   onEdit: (company: Company) => void;
-  onRemove: (id: string) => void;
-  onMoveTier: (id: string) => void;
 }
 
 export function TierSection({
@@ -29,8 +27,6 @@ export function TierSection({
   onReorder,
   onToggleStatus,
   onEdit,
-  onRemove,
-  onMoveTier,
 }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -74,8 +70,6 @@ export function TierSection({
                   company={company}
                   onToggleStatus={(key) => onToggleStatus(company.id, key)}
                   onEdit={() => onEdit(company)}
-                  onRemove={() => onRemove(company.id)}
-                  onMoveTier={() => onMoveTier(company.id)}
                 />
               ))}
             </div>

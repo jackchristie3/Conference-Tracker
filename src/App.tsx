@@ -120,8 +120,6 @@ export default function App() {
                 onReorder={(ids) => conf.reorderTier("priority", ids)}
                 onToggleStatus={handleToggleStatus}
                 onEdit={(c) => setFormTarget(c)}
-                onRemove={(id) => conf.removeCompany(id)}
-                onMoveTier={handleMoveTier}
               />
             </div>
             <div className={tab === "quick-apply" ? "block" : "hidden lg:block"}>
@@ -132,8 +130,6 @@ export default function App() {
                 onReorder={(ids) => conf.reorderTier("quick-apply", ids)}
                 onToggleStatus={handleToggleStatus}
                 onEdit={(c) => setFormTarget(c)}
-                onRemove={(id) => conf.removeCompany(id)}
-                onMoveTier={handleMoveTier}
               />
             </div>
           </div>
@@ -187,6 +183,22 @@ export default function App() {
           defaultTier={tab === "priority" || tab === "quick-apply" ? tab : undefined}
           onSave={handleSaveForm}
           onClose={() => setFormTarget(null)}
+          onRemove={
+            formTarget !== "new"
+              ? () => {
+                  conf.removeCompany(formTarget.id);
+                  setFormTarget(null);
+                }
+              : undefined
+          }
+          onMoveTier={
+            formTarget !== "new"
+              ? () => {
+                  handleMoveTier(formTarget.id);
+                  setFormTarget(null);
+                }
+              : undefined
+          }
         />
       )}
 

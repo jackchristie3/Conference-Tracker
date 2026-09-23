@@ -20,6 +20,8 @@ interface Props {
   defaultTier?: Tier;
   onSave: (value: CompanyFormValue) => void;
   onClose: () => void;
+  onRemove?: () => void;
+  onMoveTier?: () => void;
 }
 
 function toFormValue(c?: Company, defaultTier: Tier = "quick-apply"): CompanyFormValue {
@@ -38,7 +40,14 @@ function toFormValue(c?: Company, defaultTier: Tier = "quick-apply"): CompanyFor
   };
 }
 
-export function CompanyFormModal({ initial, defaultTier, onSave, onClose }: Props) {
+export function CompanyFormModal({
+  initial,
+  defaultTier,
+  onSave,
+  onClose,
+  onRemove,
+  onMoveTier,
+}: Props) {
   const [value, setValue] = useState<CompanyFormValue>(toFormValue(initial, defaultTier));
 
   const set = <K extends keyof CompanyFormValue>(key: K, v: CompanyFormValue[K]) =>
@@ -177,6 +186,29 @@ export function CompanyFormModal({ initial, defaultTier, onSave, onClose }: Prop
             />
             Priority flag
           </label>
+
+          {initial && (onMoveTier || onRemove) && (
+            <div className="flex flex-wrap gap-2 border-t border-slate-800 pt-3">
+              {onMoveTier && (
+                <button
+                  type="button"
+                  onClick={onMoveTier}
+                  className="min-h-[40px] flex-1 rounded-xl bg-slate-800 text-sm font-medium text-slate-200"
+                >
+                  Move to {initial.tier === "priority" ? "Quick Apply" : "Priority"}
+                </button>
+              )}
+              {onRemove && (
+                <button
+                  type="button"
+                  onClick={onRemove}
+                  className="min-h-[40px] flex-1 rounded-xl bg-red-900/50 text-sm text-red-300"
+                >
+                  Remove company
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="sticky bottom-0 flex gap-2 bg-slate-900 pt-2">
             <button
